@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Spring Boot and Thymeleaf example</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <script th:src="@{/webjars/jquery/3.1.1/jquery.js}"></script>
+    <script type="text/javascript">
+        $.fn.serializeObject = function () {
+            var o = {};
+            var a = this.serializeArray();
+            $.each(a, function () {
+                if (o[this.name] !== undefined) {
+                    if (!o[this.name].push) {
+                        o[this.name] = [o[this.name]];
+                    }
+                    o[this.name].push(this.value || '');
+                } else {
+                    o[this.name] = this.value || '';
+                }
+            });
+            return o;
+        };
+
+        $(function () {
+            $("#btn_test").click(function () {
+                var form = $('#form');
+                var baseObj = form.serializeObject();
+                $.ajax({
+                    url: "testConn",
+                    type: "POST",
+                    data: baseObj,
+                    dataType: "json",
+                    success: function (result) {
+                        if (result.code == 1000) {
+                            alert('链接成功');
+                        } else {
+                            alert("链接失败");
+                        }
+                    }
+                });
+            });
+
+            $("#table").click(function () {
+                var form = $('#form');
+                var baseObj = form.serializeObject();
+                $.ajax({
+                    url: "initTable",
+                    type: "POST",
+                    data: baseObj,
+                    dataType: "json",
+                    success: function (result) {
+                        if (result.code == 1000) {
+                            alert('操作成功');
+                        } else {
+                            alert(result.msg);
+                        }
+                    }
+                });
+            });
+        })
+
+        function chgData(dbType) {
+            if (dbType == 2) {
+                $("#ip").val("10.30.30.24");
+                $("#port").val("1521");
+                $("#dbName").val("ORCL");
+                $("#username").val("SIGNATURE");
+                $("#password").val("SIGNATURE");
+            } else {
+                $("#ip").val("10.40.40.139");
+                $("#port").val("3306");
+                $("#dbName").val("backup");
+                $("#username").val("root");
+                $("#password").val("root");
+            }
+        }
+    </script>
+
+    <style type="text/css">
+        table {
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid #e1e1e1;
+            padding: 10px;
+        }
+
+        td {
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<form id="form" action="code" method="post">
+    <table style="width: 600px; margin: 50px auto auto;">
+        <tr>
+            <td width="20%;">数据源类型</td>
+            <td>
+                <select name="dbType" onchange="chgData(this.value);">
+                    <option value="1">Mysql</option>
+                    <option value="2">Oracle</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td width="20%;">IP</td>
+            <td>
+                <input id="ip" type="text" name="ip" value="10.40.40.139"/>
+            </td>
+        </tr>
+        <tr>
+            <td width="20%;">端口</td>
+            <td>
+                <input type="text" id="port" name="port" value="3306"/>
+            </td>
+        </tr>
+        <tr>
+            <td width="20%;">数据库名称</td>
+            <td>
+                <input type="text" id="dbName" name="dbName" value="backup"/>
+            </td>
+        </tr>
+        <tr>
+            <td width="20%;">用户名</td>
+            <td>
+                <input type="text" id="username" name="username" value="root"/>
+            </td>
+        </tr>
+        <tr>
+            <td width="20%;">密码</td>
+            <td>
+                <input type="text" id="password" name="password" value="root"/>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align: center;">
+                <input id="btn_test" type="button" value="测试链接"/>
+                <input type="submit" onclick="this.form.action = 'code'" value="生成代码"/>
+                <input type="submit" onclick="this.form.action = 'doc'" value="生成文档"/>
+            </td>
+        </tr>
+
+        <tr>
+            <td width="20%;">表名</td>
+            <td>
+                <input type="text" id="tableName" name="tableName" value="person"/>
+            </td>
+        </tr>
+
+        <tr>
+            <td width="20%;">表注释</td>
+            <td>
+                <input type="text" id="tableComment" name="tableComment" value="用户表"/>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align: center;">
+                <input id="table" type="button" value="初始化表"/>
+            </td>
+        </tr>
+    </table>
+</form>
+</body>
+</html>
