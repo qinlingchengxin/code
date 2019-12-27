@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -117,15 +118,15 @@ public class MainController {
     @PostMapping("/initTable")
     public Map<String, Object> initTable(DataSource dataSource) {
 
+        if (StringUtils.isEmpty(dataSource.getTableName()) || StringUtils.isEmpty(dataSource.getTableComment())) {
+            return GenResult.PARAM_ERROR.genResult();
+        }
+
         boolean flag;
         if (dataSource.getDbType() == 1) {
             flag = DbUtil.testConnMySql(dataSource);
         } else {
             flag = DbUtil.testConnOracle(dataSource);
-        }
-
-        if (StringUtils.isEmpty(dataSource.getTableName()) || StringUtils.isEmpty(dataSource.getTableComment())) {
-            return GenResult.PARAM_ERROR.genResult();
         }
 
         if (!flag) {
@@ -185,5 +186,36 @@ public class MainController {
             } catch (IOException ex) {
             }
         }
+    }
+
+    @ResponseBody
+    @PostMapping("/genSql")
+    public Map<String, Object> genSql(DataSource dataSource) {
+
+        if (StringUtils.isEmpty(dataSource.getTableName()) || StringUtils.isEmpty(dataSource.getTableComment())) {
+            return GenResult.PARAM_ERROR.genResult();
+        }
+
+        boolean flag;
+        if (dataSource.getDbType() == 1) {
+            flag = DbUtil.testConnMySql(dataSource);
+        } else {
+            flag = DbUtil.testConnOracle(dataSource);
+        }
+
+        if (!flag) {
+            return GenResult.CONNECT_ERROR.genResult();
+        }
+        List<String> list;
+        if (dataSource.getDbType() == 1) {
+            list = GenerateTools.genSqlMysql(dataSource);
+        } else {
+            list = GenerateTools.genSqlOracle(dataSource);
+        }
+
+        if (list.isEmpty()) {
+            return GenResult.FAILED.genResult();
+        }
+        return GenResult.SUCCESS.genResult(list);
     }
 }

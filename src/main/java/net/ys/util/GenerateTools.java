@@ -108,7 +108,7 @@ public class GenerateTools {
             }
 
             if (tables.size() > 0) {
-                sql = "SELECT ATC.COLUMN_NAME, ATC.DATA_TYPE, UCC.COMMENTS AS COLUMN_COMMENT FROM all_tab_columns ATC, user_col_comments UCC WHERE UCC.TABLE_NAME = ATC.TABLE_NAME AND UCC.COLUMN_NAME = ATC.COLUMN_NAME AND ATC.TABLE_NAME = '%s'";
+                sql = "SELECT ATC.COLUMN_NAME, ATC.DATA_TYPE, UCC.COMMENTS AS COLUMN_COMMENT FROM all_tab_columns ATC, user_col_comments UCC WHERE UCC.TABLE_NAME = ATC.TABLE_NAME AND UCC.COLUMN_NAME = ATC.COLUMN_NAME AND ATC.TABLE_NAME = '%s' AND ATC.OWNER = '%s'";
                 String columnName;
                 String columnClassName;
                 String columnComment;
@@ -134,7 +134,7 @@ public class GenerateTools {
                     fileWriter.write("*/" + oneEnter);
                     fileWriter.write("public class " + fileName + " implements Serializable {" + twoEnter);
 
-                    rs = statement.executeQuery(String.format(sql, table));
+                    rs = statement.executeQuery(String.format(sql, table, dataSource.getUsername().toUpperCase()));
                     while (rs.next()) {
                         columnName = camelFormat(rs.getString("COLUMN_NAME").toLowerCase(), false);
                         columnClassName = rs.getString("DATA_TYPE").toLowerCase();
@@ -191,5 +191,117 @@ public class GenerateTools {
             }
         }
         return "";
+    }
+
+    public static List<String> genSqlMysql(DataSource dataSource) {
+        List<String> list = new ArrayList<>();
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            Connection connection = DriverManager.getConnection("jdbc:mysql://" + dataSource.getIp() + ":" + dataSource.getPort() + "/" + dataSource.getDbName(), dataSource.getUsername(), dataSource.getPassword());
+            Statement statement = connection.createStatement();
+
+            String sql = "SELECT COLUMN_NAME FROM information_schema.`COLUMNS` WHERE TABLE_NAME = '%s' AND TABLE_SCHEMA='%s'";
+            String columnName;
+            List<String> columns = new ArrayList<>();
+            ResultSet rs = statement.executeQuery(String.format(sql, dataSource.getTableName(), dataSource.getDbName()));
+            while (rs.next()) {
+                columnName = rs.getString("COLUMN_NAME").toLowerCase();
+                columns.add(columnName);
+            }
+
+            StringBuffer select = new StringBuffer("SELECT ");
+            StringBuffer update = new StringBuffer("UPDATE `").append(dataSource.getTableName()).append("` SET ");
+            StringBuffer insert = new StringBuffer("INSERT INTO `").append(dataSource.getTableName()).append("` (");
+            int size = 0;
+            for (String column : columns) {
+                select.append("`" + column + "`, ");
+
+                if (!"id".equals(column)) {
+                    update.append("`" + column + "` = ?, ");
+                    insert.append("`" + column + "`, ");
+                    size++;
+                }
+            }
+
+            select.deleteCharAt(select.length() - 1);
+            select.deleteCharAt(select.length() - 1);
+            select.append(" FROM `" + dataSource.getTableName() + "` WHERE 1 = 1");
+            list.add(select.toString());
+
+            update.deleteCharAt(update.length() - 1);
+            update.deleteCharAt(update.length() - 1);
+            update.append(" WHERE 1 = 1");
+            list.add(update.toString());
+
+            insert.deleteCharAt(insert.length() - 1);
+            insert.deleteCharAt(insert.length() - 1);
+            insert.append(") VALUES (").append(genMark(size)).append(")");
+            list.add(insert.toString());
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
+        return list;
+    }
+
+    public static List<String> genSqlOracle(DataSource dataSource) {
+        List<String> list = new ArrayList<>();
+        try {
+            Class.forName("oracle.jdbc.driver.OracleDriver");
+            Connection connection = DriverManager.getConnection("jdbc:oracle:thin:@" + dataSource.getIp() + ":" + dataSource.getPort() + "/" + dataSource.getDbName(), dataSource.getUsername(), dataSource.getPassword());
+            Statement statement = connection.createStatement();
+
+            String sql = "SELECT COLUMN_NAME FROM all_tab_columns WHERE TABLE_NAME = '%s' AND OWNER = '%s'";
+            String columnName;
+            List<String> columns = new ArrayList<>();
+            ResultSet rs = statement.executeQuery(String.format(sql, dataSource.getTableName().toUpperCase(), dataSource.getUsername().toUpperCase()));
+            while (rs.next()) {
+                columnName = rs.getString("COLUMN_NAME").toUpperCase();
+                columns.add(columnName);
+            }
+
+            StringBuffer select = new StringBuffer("SELECT ");
+            StringBuffer update = new StringBuffer("UPDATE `").append(dataSource.getTableName()).append("` SET ");
+            StringBuffer insert = new StringBuffer("INSERT INTO `").append(dataSource.getTableName()).append("` (");
+            int size = 0;
+            for (String column : columns) {
+                select.append("`" + column + "`, ");
+
+                if (!"id".equals(column)) {
+                    update.append("`" + column + "` = ?, ");
+                    insert.append("`" + column + "`, ");
+                    size++;
+                }
+            }
+
+            select.deleteCharAt(select.length() - 1);
+            select.deleteCharAt(select.length() - 1);
+            select.append(" FROM `" + dataSource.getTableName() + "` WHERE 1 = 1");
+            list.add(select.toString());
+
+            update.deleteCharAt(update.length() - 1);
+            update.deleteCharAt(update.length() - 1);
+            update.append(" WHERE 1 = 1");
+            list.add(update.toString());
+
+            insert.deleteCharAt(insert.length() - 1);
+            insert.deleteCharAt(insert.length() - 1);
+            insert.append(") VALUES (").append(genMark(size)).append(")");
+            list.add(insert.toString());
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
+        return list;
+    }
+
+    public static String genMark(int size) {
+        StringBuffer sb = new StringBuffer("?");
+        for (int i = 1; i < size; i++) {
+            sb.append(",?");
+        }
+        return sb.toString();
     }
 }

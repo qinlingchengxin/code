@@ -57,6 +57,28 @@
                     }
                 });
             });
+
+            $("#genSql").click(function () {
+                var form = $('#form');
+                var baseObj = form.serializeObject();
+                $.ajax({
+                    url: "genSql",
+                    type: "POST",
+                    data: baseObj,
+                    dataType: "json",
+                    success: function (result) {
+                        if (result.code == 1000) {
+                            var html = '';
+                            for (var i = 0; i < result.data.length; i++) {
+                                html += result.data[i] + "<br/><br/>";
+                            }
+                            $("#sql").html(html);
+                        } else {
+                            alert(result.msg);
+                        }
+                    }
+                });
+            });
         })
 
         function chgData(dbType) {
@@ -157,9 +179,11 @@
         <tr>
             <td colspan="2" style="text-align: center;">
                 <input id="table" type="button" value="初始化表"/>
+                <input id="genSql" type="button" value="生成SQL"/>
             </td>
         </tr>
     </table>
 </form>
+<div id="sql" style="padding-left: 50px;"></div>
 </body>
 </html>
