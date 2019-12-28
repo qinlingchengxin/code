@@ -6,8 +6,8 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.thymeleaf.util.StringUtils;
 
 import java.io.BufferedInputStream;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,10 +34,10 @@ public class GenerateDoc {
                 return null;
             }
             map.put("records", fields);
-            String templateFileName = GenerateDoc.class.getResource("/doc.xls").getPath();
+            InputStream resourceAsStream = GenerateDoc.class.getClassLoader().getResourceAsStream("doc.xls");
             String resultFileName = "doc-" + System.currentTimeMillis() + ".xls";
             FileOutputStream fos = new FileOutputStream(beanPath + "/" + resultFileName);
-            BufferedInputStream is = new BufferedInputStream(new FileInputStream(templateFileName));
+            BufferedInputStream is = new BufferedInputStream(resourceAsStream);
             XLSTransformer transformer = new XLSTransformer();
             Workbook wb = transformer.transformXLS(is, map);
             wb.write(fos);
