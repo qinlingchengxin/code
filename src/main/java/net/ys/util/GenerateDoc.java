@@ -96,7 +96,7 @@ public class GenerateDoc {
             Class.forName("oracle.jdbc.driver.OracleDriver");
             Connection connection = DriverManager.getConnection("jdbc:oracle:thin:@" + dataSource.getIp() + ":" + dataSource.getPort() + "/" + dataSource.getDbName(), dataSource.getUsername(), dataSource.getPassword());
             Statement statement = connection.createStatement();
-            String sql = "SELECT ATC.TABLE_NAME, ATCC.COMMENTS AS TABLE_COMMENT, ATC.COLUMN_NAME, UCC.COMMENTS AS COLUMN_COMMENT, ATC.DATA_TYPE FROM all_tab_columns ATC LEFT JOIN user_col_comments UCC ON UCC.TABLE_NAME = ATC.TABLE_NAME AND UCC.COLUMN_NAME = ATC.COLUMN_NAME LEFT JOIN all_tab_comments ATCC ON ATCC.TABLE_NAME = ATC.TABLE_NAME AND ATCC.OWNER = ATC.OWNER WHERE ATC.TABLE_NAME = '" + dataSource.getTableName().toUpperCase() + "' AND ATC.OWNER = '" + dataSource.getUsername().toUpperCase() + "'";
+            String sql = "SELECT ATC.TABLE_NAME, ATCC.COMMENTS AS TABLE_COMMENT, ATC.COLUMN_NAME, UCC.COMMENTS AS COLUMN_COMMENT, ATC.DATA_TYPE FROM all_tab_columns ATC LEFT JOIN user_col_comments UCC ON UCC.TABLE_NAME = ATC.TABLE_NAME AND UCC.COLUMN_NAME = ATC.COLUMN_NAME LEFT JOIN all_tab_comments ATCC ON ATCC.TABLE_NAME = ATC.TABLE_NAME AND ATCC.OWNER = ATC.OWNER WHERE ATC.OWNER = '" + dataSource.getUsername().toUpperCase() + "'";
             ResultSet rs = statement.executeQuery(sql);
             String tableName;
             String tableComment;
