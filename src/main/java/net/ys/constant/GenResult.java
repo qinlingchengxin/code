@@ -12,6 +12,10 @@ public enum GenResult {
 
     PARAM_ERROR(1003, "param error"),
 
+    TABLE_NOT_EXIST(1004, "table not exist"),
+
+    TABLE_NAME_INVALID(1005, "table name invalid"),
+
     UNKNOWN_ERROR(9999, "unknown error");
 
     public int msgCode;

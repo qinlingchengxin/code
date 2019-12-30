@@ -122,6 +122,10 @@ public class MainController {
             return GenResult.PARAM_ERROR.genResult();
         }
 
+        if (!dataSource.getTableName().matches("[A-Za-z]\\w*")) {
+            return GenResult.TABLE_NAME_INVALID.genResult();
+        }
+
         boolean flag;
         if (dataSource.getDbType() == 1) {
             flag = DbUtil.testConnMySql(dataSource);
@@ -214,7 +218,7 @@ public class MainController {
         }
 
         if (list.isEmpty()) {
-            return GenResult.FAILED.genResult();
+            return GenResult.TABLE_NOT_EXIST.genResult();
         }
         return GenResult.SUCCESS.genResult(list);
     }

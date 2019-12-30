@@ -209,6 +209,10 @@ public class GenerateTools {
                 columns.add(columnName);
             }
 
+            if (columns.isEmpty()) {
+                return list;
+            }
+
             StringBuffer select = new StringBuffer("SELECT ");
             StringBuffer update = new StringBuffer("UPDATE `").append(dataSource.getTableName()).append("` SET ");
             StringBuffer insert = new StringBuffer("INSERT INTO `").append(dataSource.getTableName()).append("` (");
@@ -261,6 +265,10 @@ public class GenerateTools {
                 columns.add(columnName);
             }
 
+            if (columns.isEmpty()) {
+                return list;
+            }
+            
             StringBuffer select = new StringBuffer("SELECT ");
             StringBuffer update = new StringBuffer("UPDATE `").append(dataSource.getTableName()).append("` SET ");
             StringBuffer insert = new StringBuffer("INSERT INTO `").append(dataSource.getTableName()).append("` (");
