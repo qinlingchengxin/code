@@ -3,10 +3,7 @@ package net.ys.util;
 import net.ys.bean.DataSource;
 
 import java.io.FileWriter;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,10 +17,12 @@ public class GenerateTools {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             Connection connection = DriverManager.getConnection("jdbc:mysql://" + dataSource.getIp() + ":" + dataSource.getPort() + "/" + dataSource.getDbName(), dataSource.getUsername(), dataSource.getPassword());
-            Statement statement = connection.createStatement();
 
-            String sql = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA. TABLES WHERE TABLE_SCHEMA = '" + dataSource.getDbName() + "'";
-            ResultSet rs = statement.executeQuery(sql);
+
+            String sql = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA = ?";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setString(1, dataSource.getDbName());
+            ResultSet rs = statement.executeQuery();
             List<String> tables = new ArrayList<String>();
             while (rs.next()) {
                 tables.add(rs.getString("TABLE_NAME").toLowerCase());
@@ -268,7 +267,7 @@ public class GenerateTools {
             if (columns.isEmpty()) {
                 return list;
             }
-            
+
             StringBuffer select = new StringBuffer("SELECT ");
             StringBuffer update = new StringBuffer("UPDATE `").append(dataSource.getTableName()).append("` SET ");
             StringBuffer insert = new StringBuffer("INSERT INTO `").append(dataSource.getTableName()).append("` (");
