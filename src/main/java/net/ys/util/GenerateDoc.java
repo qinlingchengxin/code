@@ -60,6 +60,7 @@ public class GenerateDoc {
                 sheet.addMergedRegion(new CellRangeAddress(firstRow, lastRow, 0, 0));
                 firstRow = firstRow + fc;
             }
+
             wb.write(fos);
             is.close();
             fos.close();
@@ -75,9 +76,10 @@ public class GenerateDoc {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             Connection connection = DriverManager.getConnection("jdbc:mysql://" + dataSource.getIp() + ":" + dataSource.getPort() + "/" + dataSource.getDbName(), dataSource.getUsername(), dataSource.getPassword());
-            String sql = "SELECT COUNT(COLUMN_NAME) AS c FROM information_schema.`COLUMNS` WHERE TABLE_SCHEMA = '" + dataSource.getDbName() + "' GROUP BY TABLE_NAME ORDER BY TABLE_NAME";
-            Statement statement = connection.createStatement();
-            ResultSet rs = statement.executeQuery(sql);
+            String sql = "SELECT COUNT(c.COLUMN_NAME) AS c FROM information_schema.`COLUMNS` c, information_schema.`TABLES` t WHERE t.TABLE_SCHEMA = c.TABLE_SCHEMA AND t.TABLE_NAME = c.TABLE_NAME AND t.TABLE_TYPE = 'BASE TABLE' AND c.TABLE_SCHEMA = ? GROUP BY c.TABLE_NAME ORDER BY c.TABLE_NAME";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setString(1, dataSource.getDbName());
+            ResultSet rs = statement.executeQuery();
             while (rs.next()) {
                 fieldCount.add(rs.getInt("c"));
             }
@@ -115,7 +117,7 @@ public class GenerateDoc {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             Connection connection = DriverManager.getConnection("jdbc:mysql://" + dataSource.getIp() + ":" + dataSource.getPort() + "/" + dataSource.getDbName(), dataSource.getUsername(), dataSource.getPassword());
-            PreparedStatement statement = connection.prepareStatement("SELECT c.TABLE_NAME, t.TABLE_COMMENT, c.COLUMN_NAME, c.COLUMN_TYPE AS DATA_TYPE, c.COLUMN_COMMENT FROM information_schema.`COLUMNS` c LEFT JOIN information_schema.`TABLES` t ON t.TABLE_SCHEMA = c.TABLE_SCHEMA AND t.TABLE_NAME = c.TABLE_NAME WHERE c.TABLE_SCHEMA = ? AND t.TABLE_TYPE = 'BASE TABLE' ORDER BY c.TABLE_NAME, c.ORDINAL_POSITION");
+            PreparedStatement statement = connection.prepareStatement("SELECT c.TABLE_NAME, t.TABLE_COMMENT, c.COLUMN_NAME, c.COLUMN_TYPE AS DATA_TYPE, c.COLUMN_COMMENT FROM information_schema.`COLUMNS` c, information_schema.`TABLES` t WHERE t.TABLE_SCHEMA = c.TABLE_SCHEMA AND t.TABLE_NAME = c.TABLE_NAME AND t.TABLE_TYPE = 'BASE TABLE' AND c.TABLE_SCHEMA = ? ORDER BY c.TABLE_NAME, c.ORDINAL_POSITION");
             statement.setString(1, dataSource.getDbName());
             ResultSet rs = statement.executeQuery();
             String tableName;
