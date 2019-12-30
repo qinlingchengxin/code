@@ -1,7 +1,7 @@
 server:
   servlet:
-    context-path: /code
-  port: 8080
+    context-path: /dbToCode
+  port: 12306
 
 code:
   file:
