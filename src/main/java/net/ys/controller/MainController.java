@@ -4,13 +4,18 @@ import net.ys.bean.DataSource;
 import net.ys.constant.GenResult;
 import net.ys.constant.X;
 import net.ys.util.*;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.thymeleaf.util.StringUtils;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
@@ -34,6 +39,14 @@ public class MainController {
     @GetMapping("/")
     public String index() {
         return "index";
+    }
+
+    @PostConstruct
+    public void init() {
+        File file = new File(codeFilePath);
+        if (!file.exists()) {
+            file.mkdirs();
+        }
     }
 
     @ResponseBody
@@ -221,5 +234,29 @@ public class MainController {
             return GenResult.TABLE_NOT_EXIST.genResult();
         }
         return GenResult.SUCCESS.genResult(list);
+    }
+
+    /**
+     * 定时删除生成的文件
+     */
+    @Scheduled(cron = "5 1 0 * * ?")
+    public void delTmpFiles() {
+        File file = new File(codeFilePath);
+        final long now = System.currentTimeMillis();
+        FileUtils.listFiles(file, new IOFileFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return false;
+            }
+
+            @Override
+            public boolean accept(File file) {
+                long time = file.lastModified();
+                if (time < now - 7 * X.TIME.DAY_MILLISECOND) {
+                    file.delete();
+                }
+                return false;
+            }
+        }, TrueFileFilter.INSTANCE);
     }
 }
