@@ -52,7 +52,6 @@ public class MainController {
         return GenResult.SUCCESS.genResult();
     }
 
-    @ResponseBody
     @PostMapping(value = "code")
     public void code(HttpServletResponse response, DataSource dataSource) {
         try {
@@ -65,6 +64,7 @@ public class MainController {
             }
 
             if (!flag) {
+                response.getWriter().write("connect error");
                 return;
             }
 
@@ -149,7 +149,6 @@ public class MainController {
         return GenResult.SUCCESS.genResult();
     }
 
-    @ResponseBody
     @PostMapping(value = "doc")
     public void doc(HttpServletResponse response, DataSource dataSource) {
         try {
@@ -162,6 +161,7 @@ public class MainController {
             }
 
             if (!flag) {
+                response.getWriter().write("connect error");
                 return;
             }
 

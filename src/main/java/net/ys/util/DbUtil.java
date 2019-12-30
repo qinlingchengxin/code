@@ -23,7 +23,7 @@ public class DbUtil {
             connection.close();
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         } finally {
             try {
                 if (statement != null) {
@@ -48,7 +48,7 @@ public class DbUtil {
             connection.close();
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         } finally {
             try {
                 if (statement != null) {
