@@ -98,10 +98,10 @@ public class GenerateDoc {
             Class.forName("oracle.jdbc.driver.OracleDriver");
             Connection connection = DriverManager.getConnection("jdbc:oracle:thin:@" + dataSource.getIp() + ":" + dataSource.getPort() + "/" + dataSource.getDbName(), dataSource.getUsername(), dataSource.getPassword());
             Statement statement = connection.createStatement();
-            String sql = "SELECT COUNT(ATC.COLUMN_NAME) AS C FROM all_tab_columns ATC WHERE ATC. OWNER = '" + dataSource.getUsername().toUpperCase() + "' GROUP BY ATC.TABLE_NAME ORDER BY ATC.TABLE_NAME";
+            String sql = "SELECT COUNT(UTC.COLUMN_NAME) AS C FROM user_tab_columns UTC, user_tab_comments UTCM WHERE UTC.TABLE_NAME = UTCM.TABLE_NAME AND UTCM.TABLE_TYPE = 'TABLE' GROUP BY UTC.TABLE_NAME ORDER BY UTC.TABLE_NAME";
             ResultSet rs = statement.executeQuery(sql);
             while (rs.next()) {
-                fieldCount.add(rs.getInt("c"));
+                fieldCount.add(rs.getInt("C"));
             }
             rs.close();
             statement.close();
@@ -158,7 +158,7 @@ public class GenerateDoc {
             Class.forName("oracle.jdbc.driver.OracleDriver");
             Connection connection = DriverManager.getConnection("jdbc:oracle:thin:@" + dataSource.getIp() + ":" + dataSource.getPort() + "/" + dataSource.getDbName(), dataSource.getUsername(), dataSource.getPassword());
             Statement statement = connection.createStatement();
-            String sql = "SELECT ATC.TABLE_NAME, ATCC.COMMENTS AS TABLE_COMMENT, ATC.COLUMN_NAME, UCC.COMMENTS AS COLUMN_COMMENT, CASE WHEN ATC.DATA_TYPE = 'NUMBER' THEN 'NUMBER(' || ATC.DATA_PRECISION || ',' || ATC.DATA_SCALE || ')' WHEN ATC.DATA_TYPE = 'TIMESTAMP(0)' THEN 'TIMESTAMP(0)' ELSE ATC.DATA_TYPE || '(' || ATC.CHAR_LENGTH || ')' END DATA_TYPE FROM all_tab_columns ATC LEFT JOIN user_col_comments UCC ON UCC.TABLE_NAME = ATC.TABLE_NAME AND UCC.COLUMN_NAME = ATC.COLUMN_NAME LEFT JOIN all_tab_comments ATCC ON ATCC.TABLE_NAME = ATC.TABLE_NAME AND ATCC.OWNER = ATC.OWNER WHERE ATC.OWNER = '" + dataSource.getUsername().toUpperCase() + "' ORDER BY ATC.TABLE_NAME, ATC.COLUMN_ID";
+            String sql = "SELECT UTC.TABLE_NAME, UTCC.COMMENTS AS TABLE_COMMENT, UTC.COLUMN_NAME, UCC.COMMENTS AS COLUMN_COMMENT, CASE WHEN UTC.DATA_TYPE = 'NUMBER' THEN 'NUMBER(' || UTC.DATA_PRECISION || ',' || UTC.DATA_SCALE || ')' WHEN UTC.DATA_TYPE = 'TIMESTAMP(0)' THEN 'TIMESTAMP(0)' ELSE UTC.DATA_TYPE || '(' || UTC.CHAR_LENGTH || ')' END DATA_TYPE FROM user_tab_columns UTC LEFT JOIN user_col_comments UCC ON UCC.TABLE_NAME = UTC.TABLE_NAME AND UCC.COLUMN_NAME = UTC.COLUMN_NAME, user_tab_comments UTCC WHERE UTCC.TABLE_NAME = UTC.TABLE_NAME AND UTCC.TABLE_TYPE = 'TABLE' ORDER BY UTC.TABLE_NAME, UTC.COLUMN_ID";
             ResultSet rs = statement.executeQuery(sql);
             String tableName;
             String tableComment;

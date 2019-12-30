@@ -99,7 +99,7 @@ public class GenerateTools {
             Connection connection = DriverManager.getConnection("jdbc:oracle:thin:@" + dataSource.getIp() + ":" + dataSource.getPort() + "/" + dataSource.getDbName(), dataSource.getUsername(), dataSource.getPassword());
             Statement statement = connection.createStatement();
 
-            String sql = "SELECT TABLE_NAME FROM user_tab_comments";
+            String sql = "SELECT TABLE_NAME FROM user_tab_comments WHERE TABLE_TYPE = 'TABLE'";
             ResultSet rs = statement.executeQuery(sql);
             List<String> tables = new ArrayList<>();
             while (rs.next()) {
@@ -107,7 +107,7 @@ public class GenerateTools {
             }
 
             if (tables.size() > 0) {
-                sql = "SELECT ATC.COLUMN_NAME, ATC.DATA_TYPE, UCC.COMMENTS AS COLUMN_COMMENT FROM all_tab_columns ATC, user_col_comments UCC WHERE UCC.TABLE_NAME = ATC.TABLE_NAME AND UCC.COLUMN_NAME = ATC.COLUMN_NAME AND ATC.TABLE_NAME = '%s' AND ATC.OWNER = '%s'";
+                sql = "SELECT UTC.COLUMN_NAME, UTC.DATA_TYPE, UCC.COMMENTS AS COLUMN_COMMENT FROM user_tab_columns UTC, user_col_comments UCC WHERE UCC.TABLE_NAME = UTC.TABLE_NAME AND UCC.COLUMN_NAME = UTC.COLUMN_NAME AND UTC.TABLE_NAME = '%s'";
                 String columnName;
                 String columnClassName;
                 String columnComment;
@@ -133,7 +133,7 @@ public class GenerateTools {
                     fileWriter.write("*/" + oneEnter);
                     fileWriter.write("public class " + fileName + " implements Serializable {" + twoEnter);
 
-                    rs = statement.executeQuery(String.format(sql, table, dataSource.getUsername().toUpperCase()));
+                    rs = statement.executeQuery(String.format(sql, table));
                     while (rs.next()) {
                         columnName = camelFormat(rs.getString("COLUMN_NAME").toLowerCase(), false);
                         columnClassName = rs.getString("DATA_TYPE").toLowerCase();
