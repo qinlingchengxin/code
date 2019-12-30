@@ -2,7 +2,9 @@ package net.ys.util;
 
 import net.sf.jxls.transformer.XLSTransformer;
 import net.ys.bean.DataSource;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.thymeleaf.util.StringUtils;
 
 import java.io.BufferedInputStream;
@@ -34,12 +36,30 @@ public class GenerateDoc {
                 return null;
             }
             map.put("records", fields);
+
+            //获取每个表的字段数目，按照表名排序
+            List<Integer> tableFieldCount;
+            if (dataSource.getDbType() == 1) {
+                tableFieldCount = getTableFieldCountMysql(dataSource);
+            } else {
+                tableFieldCount = getTableFieldCountOracle(dataSource);
+            }
+
             InputStream resourceAsStream = GenerateDoc.class.getClassLoader().getResourceAsStream("doc.xls");
             String resultFileName = "doc-" + System.currentTimeMillis() + ".xls";
             FileOutputStream fos = new FileOutputStream(beanPath + "/" + resultFileName);
             BufferedInputStream is = new BufferedInputStream(resourceAsStream);
             XLSTransformer transformer = new XLSTransformer();
             Workbook wb = transformer.transformXLS(is, map);
+
+            Sheet sheet = wb.getSheetAt(0);
+            int firstRow = 1;
+            int lastRow;
+            for (Integer fc : tableFieldCount) {
+                lastRow = firstRow + fc - 1;
+                sheet.addMergedRegion(new CellRangeAddress(firstRow, lastRow, 0, 0));
+                firstRow = firstRow + fc;
+            }
             wb.write(fos);
             is.close();
             fos.close();
@@ -48,6 +68,46 @@ public class GenerateDoc {
             System.out.println(e.getMessage());
         }
         return null;
+    }
+
+    private static List<Integer> getTableFieldCountMysql(DataSource dataSource) {
+        List<Integer> fieldCount = new ArrayList<>();
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            Connection connection = DriverManager.getConnection("jdbc:mysql://" + dataSource.getIp() + ":" + dataSource.getPort() + "/" + dataSource.getDbName(), dataSource.getUsername(), dataSource.getPassword());
+            String sql = "SELECT COUNT(COLUMN_NAME) AS c FROM information_schema.`COLUMNS` WHERE TABLE_SCHEMA = '" + dataSource.getDbName() + "' GROUP BY TABLE_NAME ORDER BY TABLE_NAME";
+            Statement statement = connection.createStatement();
+            ResultSet rs = statement.executeQuery(sql);
+            while (rs.next()) {
+                fieldCount.add(rs.getInt("c"));
+            }
+            rs.close();
+            statement.close();
+            connection.close();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        return fieldCount;
+    }
+
+    private static List<Integer> getTableFieldCountOracle(DataSource dataSource) {
+        List<Integer> fieldCount = new ArrayList<>();
+        try {
+            Class.forName("oracle.jdbc.driver.OracleDriver");
+            Connection connection = DriverManager.getConnection("jdbc:oracle:thin:@" + dataSource.getIp() + ":" + dataSource.getPort() + "/" + dataSource.getDbName(), dataSource.getUsername(), dataSource.getPassword());
+            Statement statement = connection.createStatement();
+            String sql = "SELECT COUNT(ATC.COLUMN_NAME) AS C FROM all_tab_columns ATC WHERE ATC. OWNER = '" + dataSource.getUsername().toUpperCase() + "' GROUP BY ATC.TABLE_NAME ORDER BY ATC.TABLE_NAME";
+            ResultSet rs = statement.executeQuery(sql);
+            while (rs.next()) {
+                fieldCount.add(rs.getInt("c"));
+            }
+            rs.close();
+            statement.close();
+            connection.close();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        return fieldCount;
     }
 
     public static List<Map<String, String>> getAllFieldsMySql(DataSource dataSource) {
@@ -96,7 +156,7 @@ public class GenerateDoc {
             Class.forName("oracle.jdbc.driver.OracleDriver");
             Connection connection = DriverManager.getConnection("jdbc:oracle:thin:@" + dataSource.getIp() + ":" + dataSource.getPort() + "/" + dataSource.getDbName(), dataSource.getUsername(), dataSource.getPassword());
             Statement statement = connection.createStatement();
-            String sql = "SELECT ATC.TABLE_NAME, ATCC.COMMENTS AS TABLE_COMMENT, ATC.COLUMN_NAME, UCC.COMMENTS AS COLUMN_COMMENT, ATC.DATA_TYPE FROM all_tab_columns ATC LEFT JOIN user_col_comments UCC ON UCC.TABLE_NAME = ATC.TABLE_NAME AND UCC.COLUMN_NAME = ATC.COLUMN_NAME LEFT JOIN all_tab_comments ATCC ON ATCC.TABLE_NAME = ATC.TABLE_NAME AND ATCC.OWNER = ATC.OWNER WHERE ATC.OWNER = '" + dataSource.getUsername().toUpperCase() + "'";
+            String sql = "SELECT ATC.TABLE_NAME, ATCC.COMMENTS AS TABLE_COMMENT, ATC.COLUMN_NAME, UCC.COMMENTS AS COLUMN_COMMENT, ATC.DATA_TYPE FROM all_tab_columns ATC LEFT JOIN user_col_comments UCC ON UCC.TABLE_NAME = ATC.TABLE_NAME AND UCC.COLUMN_NAME = ATC.COLUMN_NAME LEFT JOIN all_tab_comments ATCC ON ATCC.TABLE_NAME = ATC.TABLE_NAME AND ATCC.OWNER = ATC.OWNER WHERE ATC.OWNER = '" + dataSource.getUsername().toUpperCase() + "' ORDER BY ATC.TABLE_NAME, ATC.COLUMN_NAME";
             ResultSet rs = statement.executeQuery(sql);
             String tableName;
             String tableComment;
